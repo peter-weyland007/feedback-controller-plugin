@@ -4,9 +4,11 @@ A standalone plugin for **fee[dB]ack** that adds a controller-input sandbox scre
 
 It currently includes:
 - live controller detection
-- live button / axis highlight
+- controller picker when multiple pads are connected
+- named profiles saved per controller
 - click-to-map input capture
-- saved mappings via localStorage
+- calibration for axis threshold, deadzones, and inversion
+- saved mappings/profile selection via localStorage
 - a console-style UI for testing controller input quickly
 
 ## What this is
@@ -86,22 +88,53 @@ In fee[dB]ack, go to:
 
 ## How to use it
 
-### Live highlight
-Press buttons or move sticks on your controller.
+### Pick the controller
+1. Plug in one or more controllers
+2. Open the **Selected controller** dropdown
+3. Pick the exact controller you want to work on
 
-The plugin will light up the matching live input tiles so you can see what the browser is receiving.
+The plugin uses the browser Gamepad API, so each controller is tracked by its reported **id** plus **slot/index**.
 
-### Interactive mapping
+### Save a named profile
+1. Pick the controller
+2. Use the **Named profile** dropdown to choose the current profile
+3. Edit the **Profile name** field
+4. Click **Save**
+
+That profile is saved for that controller and remembered between runs on the same machine/app storage.
+
+### Map controls
 1. Click a mapping tile
 2. Press a controller button or move an axis
 3. The plugin captures that next input
-4. The mapping is saved in browser localStorage
+4. The mapping is saved into the selected named profile
+
+### Calibrate axes
+You can tune:
+- **Axis threshold** — how far an axis has to move before it counts as active
+- **Strum axis deadzone**
+- **Whammy axis deadzone**
+- **Invert axis** for each of those two common guitar axes
+
+## Platform notes
+
+### Windows
+Should work if the app/browser runtime can see the controller through the Gamepad API.
+
+### macOS
+Should work under the same rule: if the runtime sees the controller, the plugin can read it.
+
+### Docker
+Docker is not the deciding part by itself.
+
+The real question is whether the **actual browser/app process inside that environment has access to the controller device**. If controller passthrough is missing, the plugin cannot see it.
 
 ## Notes
 
 - This plugin depends on the browser Gamepad API.
 - A controller usually needs to be connected **before** or **during** app use.
 - Some controllers only report after the first button press.
+- Profiles are stored in browser/app localStorage, so they persist between runs in the same local app storage context.
 - Styling depends on the fee[dB]ack build supporting runtime plugin CSS scanning.
 
 ## Troubleshooting
@@ -145,7 +178,7 @@ feedback_contoller_input/
 ## Version
 
 Current packaged plugin version:
-- `0.4.0`
+- `0.5.0`
 
 ## License
 
