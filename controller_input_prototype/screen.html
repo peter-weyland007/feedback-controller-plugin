@@ -1,0 +1,52 @@
+<section id="controller-prototype-screen" class="relative overflow-hidden rounded-[32px] border border-blue-300/20 bg-[#050816] p-4 md:p-6 space-y-5 shadow-[0_0_0_1px_rgba(96,165,250,0.08),0_32px_120px_rgba(2,6,23,0.72)]">
+  <div class="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(59,130,246,0.34),transparent_26%),radial-gradient(circle_at_82%_12%,rgba(96,165,250,0.22),transparent_24%),radial-gradient(circle_at_50%_100%,rgba(37,99,235,0.28),transparent_38%),linear-gradient(135deg,rgba(7,12,30,0.98),rgba(6,16,44,0.94)_48%,rgba(3,8,24,0.99))]"></div>
+  <div class="pointer-events-none absolute inset-0 bg-[linear-gradient(120deg,transparent_0%,rgba(255,255,255,0.03)_32%,transparent_58%)]"></div>
+  <div class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-200/70 to-transparent"></div>
+  <div class="pointer-events-none absolute left-[-4rem] top-10 h-52 w-52 rounded-full border border-blue-200/10"></div>
+  <div class="pointer-events-none absolute right-[-3rem] top-20 h-72 w-72 rounded-full border border-sky-300/10"></div>
+  <div class="pointer-events-none absolute bottom-[-5rem] left-1/3 h-56 w-56 rounded-full bg-blue-500/10 blur-3xl"></div>
+
+  <div class="relative space-y-2">
+    <p class="text-[11px] font-semibold uppercase tracking-[0.34em] text-blue-200/80">PlayStation Style Input Lab</p>
+    <h2 class="text-2xl font-semibold tracking-tight text-white">Controller Prototype</h2>
+    <p class="max-w-2xl text-sm text-blue-100/75">A glassy, console-style sandbox for browser gamepad input before any generic controller layer moves into core.</p>
+  </div>
+
+  <div class="relative grid gap-4 lg:grid-cols-[1.08fr_0.92fr]">
+    <div class="rounded-[26px] border border-white/12 bg-white/[0.07] p-4 space-y-3 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_40px_rgba(15,23,42,0.38)]">
+      <div class="flex items-center justify-between gap-3">
+        <div>
+          <h3 class="text-sm font-semibold text-white">Live controller state</h3>
+          <p id="controller-prototype-status" class="text-xs text-blue-100/60">No controller detected yet.</p>
+        </div>
+        <button id="controller-prototype-refresh" type="button" class="rounded-full border border-blue-200/25 bg-blue-300/10 px-3.5 py-2 text-sm font-medium text-blue-50 transition hover:bg-blue-300/18 hover:border-blue-100/40">Refresh</button>
+      </div>
+      <div id="controller-prototype-primary" class="rounded-2xl border border-white/10 bg-slate-950/35 px-3 py-2 text-sm text-blue-50/90 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">Waiting for a standard browser gamepad…</div>
+      <div>
+        <div class="mb-2 flex items-center justify-between gap-2">
+          <h4 class="text-xs font-semibold uppercase tracking-[0.24em] text-blue-100/60">Live button highlight</h4>
+          <span class="text-[11px] text-blue-100/45">Lights up when inputs are active</span>
+        </div>
+        <div id="controller-prototype-live-inputs" class="grid gap-2 sm:grid-cols-2 xl:grid-cols-3"></div>
+      </div>
+      <pre id="controller-prototype-pads" class="max-h-80 overflow-auto rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-xs text-blue-50/75 whitespace-pre-wrap shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">[]</pre>
+    </div>
+
+    <div class="rounded-[26px] border border-white/12 bg-white/[0.07] p-4 space-y-3 backdrop-blur-xl shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_12px_40px_rgba(15,23,42,0.38)]">
+      <div>
+        <h3 class="text-sm font-semibold text-white">Interactive mapping</h3>
+        <p class="text-xs text-blue-100/60">Click an action tile, then press a controller button or move an axis to remap it.</p>
+      </div>
+      <div class="rounded-2xl border border-white/10 bg-slate-950/35 px-3 py-2 text-sm text-blue-50/85 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+        <div id="controller-prototype-capture-status">Click a tile below, then press a controller button to remap it.</div>
+        <button id="controller-prototype-cancel-capture" type="button" class="mt-2 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1.5 text-xs text-blue-50/85 transition hover:border-blue-100/35 hover:bg-white/[0.08] disabled:opacity-40 disabled:cursor-not-allowed">Cancel listening</button>
+      </div>
+      <div id="controller-prototype-mapping-grid" class="grid gap-2 sm:grid-cols-2"></div>
+      <pre id="controller-prototype-profile" class="rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-xs text-blue-50/75 whitespace-pre-wrap shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]"></pre>
+      <div class="flex flex-wrap gap-2">
+        <button id="controller-prototype-save-default" type="button" class="rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-2 text-sm text-blue-50/90 transition hover:border-blue-100/35 hover:bg-white/[0.08]">Save default profile</button>
+        <button id="controller-prototype-clear-profile" type="button" class="rounded-full border border-white/15 bg-white/[0.04] px-3.5 py-2 text-sm text-blue-50/90 transition hover:border-blue-100/35 hover:bg-white/[0.08]">Clear profile</button>
+      </div>
+    </div>
+  </div>
+</section>
