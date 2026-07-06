@@ -1,4 +1,4 @@
-# fee[dB]ack Controller Input Prototype
+# fee[dB]ack Controller Input Lab
 
 A standalone plugin for **fee[dB]ack** that adds a controller-input sandbox screen.
 
@@ -14,7 +14,7 @@ It currently includes:
 This is a **plugin folder** you can drop into a fee[dB]ack plugin directory.
 
 After install, open:
-- **Plugins → Controller Input Prototype**
+- **Plugins → Controller Input Lab**
 
 ## Install
 
@@ -25,7 +25,7 @@ Download the zip from the GitHub Releases page, then unzip it.
 You should end up with this folder:
 
 ```text
-controller_input_prototype/
+controller_input_lab/
   plugin.json
   screen.html
   screen.js
@@ -36,14 +36,14 @@ controller_input_prototype/
 Example:
 
 ```text
-~/feedback-plugins/controller_input_prototype/
+~/feedback-plugins/controller_input_lab/
 ```
 
 So your final layout should look like:
 
 ```text
 ~/feedback-plugins/
-  controller_input_prototype/
+  controller_input_lab/
     plugin.json
     screen.html
     screen.js
@@ -82,7 +82,7 @@ If fee[dB]ack was already running, close it fully and reopen it.
 
 In fee[dB]ack, go to:
 - **Plugins**
-- **Controller Input Prototype**
+- **Controller Input Lab**
 
 ## How to use it
 
@@ -109,7 +109,7 @@ The plugin will light up the matching live input tiles so you can see what the b
 ### I installed it but do not see it
 
 Check these first:
-- the plugin folder name is exactly `controller_input_prototype`
+- the plugin folder name is exactly `controller_input_lab`
 - `plugin.json` is inside that folder
 - `FEEDBACK_PLUGINS_DIR` points to the parent folder, not the plugin folder itself
 - fee[dB]ack was fully restarted
@@ -118,13 +118,13 @@ Correct:
 
 ```text
 FEEDBACK_PLUGINS_DIR=~/feedback-plugins
-~/feedback-plugins/controller_input_prototype/plugin.json
+~/feedback-plugins/controller_input_lab/plugin.json
 ```
 
 Wrong:
 
 ```text
-FEEDBACK_PLUGINS_DIR=~/feedback-plugins/controller_input_prototype
+FEEDBACK_PLUGINS_DIR=~/feedback-plugins/controller_input_lab
 ```
 
 ### The plugin appears but looks unstyled
@@ -136,7 +136,7 @@ The plugin files are still correct, but the host app may need its runtime plugin
 ## Repository contents
 
 ```text
-controller_input_prototype/
+controller_input_lab/
   plugin.json
   screen.html
   screen.js

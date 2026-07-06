@@ -1,0 +1,15 @@
+{
+  "id": "controller_input_lab",
+  "name": "Controller Input Lab",
+  "version": "0.3.0",
+  "bundled": false,
+  "private": false,
+  "nav": {
+    "label": "Controllers",
+    "screen": "plugin-controller_input_lab"
+  },
+  "screen": "screen.html",
+  "script": "screen.js",
+  "description": "Plugin-first Gamepad API sandbox for plastic-instrument and controller input exploration.",
+  "category": "practice"
+}
