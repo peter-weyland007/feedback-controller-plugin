@@ -2,35 +2,41 @@
 
 A standalone plugin for **fee[dB]ack** that adds a controller-input sandbox screen.
 
-It currently includes:
+It now includes:
 - live controller detection
 - controller picker when multiple pads are connected
+- per-controller auto-load when an exact saved device match returns
 - named profiles saved per controller
+- **New** profile button
+- **Duplicate** profile button
 - click-to-map input capture
-- calibration for axis threshold, deadzones, and inversion
+- calibration for **all 4 standard stick axes**
+- a bundled plugin CSS file so the standalone install renders correctly
 - saved mappings/profile selection via localStorage
-- a console-style UI for testing controller input quickly
 
-## What this is
+## What was broken
 
-This is a **plugin folder** you can drop into a fee[dB]ack plugin directory.
+The standalone repo version previously shipped only `screen.html` + `screen.js` and depended on the host app's in-tree Tailwind scan.
 
-After install, open:
-- **Plugins → feedback-contoller-input**
+That meant a standalone runtime install could show up looking blank or basically unstyled.
+
+This is now fixed by shipping:
+- `assets/plugin.css`
+- `styles: "assets/plugin.css"` in `plugin.json`
 
 ## Install
 
-### 1. Download
+### 1. Download and unzip
 
-Download the zip from the GitHub Releases page, then unzip it.
-
-You should end up with this folder:
+After unzip, you should have:
 
 ```text
 feedback_contoller_input/
   plugin.json
   screen.html
   screen.js
+  assets/
+    plugin.css
 ```
 
 ### 2. Put it in your user plugins directory
@@ -41,35 +47,15 @@ Example:
 ~/feedback-plugins/feedback_contoller_input/
 ```
 
-So your final layout should look like:
-
-```text
-~/feedback-plugins/
-  feedback_contoller_input/
-    plugin.json
-    screen.html
-    screen.js
-```
-
 ### 3. Launch fee[dB]ack with `FEEDBACK_PLUGINS_DIR`
 
-fee[dB]ack discovers user plugins from the `FEEDBACK_PLUGINS_DIR` environment variable.
-
-#### macOS / Linux
+macOS / Linux:
 
 ```bash
 FEEDBACK_PLUGINS_DIR="$HOME/feedback-plugins" /path/to/your/feedback-app
 ```
 
-If you normally start fee[dB]ack some other way, make sure that launcher also sets:
-
-```bash
-FEEDBACK_PLUGINS_DIR=$HOME/feedback-plugins
-```
-
-#### Windows
-
-Set an environment variable before launching the app:
+Windows PowerShell:
 
 ```powershell
 $env:FEEDBACK_PLUGINS_DIR="$HOME\feedback-plugins"
@@ -78,74 +64,60 @@ Start-Process "C:\path\to\fee[dB]ack.exe"
 
 ### 4. Restart the app
 
-If fee[dB]ack was already running, close it fully and reopen it.
+If fee[dB]ack was already open, fully quit and reopen it.
 
 ### 5. Open the plugin
 
-In fee[dB]ack, go to:
+In fee[dB]ack:
 - **Plugins**
-- **feedback-contoller-input**
+- **Controllers**
 
 ## How to use it
 
 ### Pick the controller
 1. Plug in one or more controllers
-2. Open the **Selected controller** dropdown
-3. Pick the exact controller you want to work on
+2. Open **Selected controller**
+3. Pick the exact controller you want
 
-The plugin uses the browser Gamepad API, so each controller is tracked by its reported **id** plus **slot/index**.
+If a controller comes back later with the same exact browser-reported device id + slot, the plugin now auto-selects that controller when it has saved data for it.
 
-### Save a named profile
-1. Pick the controller
-2. Use the **Named profile** dropdown to choose the current profile
-3. Edit the **Profile name** field
-4. Click **Save**
-
-That profile is saved for that controller and remembered between runs on the same machine/app storage.
+### Work with profiles
+- **Rename** changes the current profile name
+- **New** creates a fresh profile for the selected controller
+- **Duplicate** clones the current profile under a new name
 
 ### Map controls
 1. Click a mapping tile
-2. Press a controller button or move an axis
-3. The plugin captures that next input
-4. The mapping is saved into the selected named profile
+2. Press a button or move an axis
+3. The plugin saves that input into the current profile
 
 ### Calibrate axes
 You can tune:
-- **Axis threshold** — how far an axis has to move before it counts as active
-- **Strum axis deadzone**
-- **Whammy axis deadzone**
-- **Invert axis** for each of those two common guitar axes
-
-## Platform notes
-
-### Windows
-Should work if the app/browser runtime can see the controller through the Gamepad API.
-
-### macOS
-Should work under the same rule: if the runtime sees the controller, the plugin can read it.
-
-### Docker
-Docker is not the deciding part by itself.
-
-The real question is whether the **actual browser/app process inside that environment has access to the controller device**. If controller passthrough is missing, the plugin cannot see it.
-
-## Notes
-
-- This plugin depends on the browser Gamepad API.
-- A controller usually needs to be connected **before** or **during** app use.
-- Some controllers only report after the first button press.
-- Profiles are stored in browser/app localStorage, so they persist between runs in the same local app storage context.
-- Styling depends on the fee[dB]ack build supporting runtime plugin CSS scanning.
+- **Axis threshold**
+- **Deadzone** for left stick X/Y and right stick X/Y
+- **Invert axis** for left stick X/Y and right stick X/Y
 
 ## Troubleshooting
 
-### I installed it but do not see it
+### The plugin appears but looks blank / unstyled
+That specific packaging problem is what `0.6.0` fixes.
 
-Check these first:
-- the plugin folder name is exactly `feedback_contoller_input`
+Make sure all of these files are present:
+
+```text
+feedback_contoller_input/
+  plugin.json
+  screen.html
+  screen.js
+  assets/plugin.css
+```
+
+### I installed it but do not see it
+Check:
+- the folder name is exactly `feedback_contoller_input`
 - `plugin.json` is inside that folder
-- `FEEDBACK_PLUGINS_DIR` points to the parent folder, not the plugin folder itself
-- fee[dB]ack was fully restarted
+- `FEEDBACK_PLUGINS_DIR` points to the parent folder
+- fee[dB]ack was restarted after install
 
 Correct:
 
@@ -160,12 +132,6 @@ Wrong:
 FEEDBACK_PLUGINS_DIR=~/feedback-plugins/feedback_contoller_input
 ```
 
-### The plugin appears but looks unstyled
-
-Your fee[dB]ack build may not be rebuilding runtime CSS for user plugins yet.
-
-The plugin files are still correct, but the host app may need its runtime plugin-style rebuild path enabled.
-
 ## Repository contents
 
 ```text
@@ -173,12 +139,14 @@ feedback_contoller_input/
   plugin.json
   screen.html
   screen.js
+  assets/
+    plugin.css
 ```
 
 ## Version
 
 Current packaged plugin version:
-- `0.5.0`
+- `0.6.0`
 
 ## License
 

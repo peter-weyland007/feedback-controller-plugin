@@ -5,7 +5,7 @@
     const POLL_MS = 150;
     const DEFAULT_AXIS_THRESHOLD = 0.35;
     const GLOBAL_CONTROLLER_KEY = 'default-standard-pad#global';
-    const AXIS_CALIBRATION_KEYS = Object.freeze(['leftStickX', 'leftStickY', 'rightStickX', 'rightStickY']);
+    const DEFAULT_PROFILE_NAME = 'default-standard-pad';
     const ACTION_ORDER = Object.freeze([
         ['south', 'Confirm'],
         ['east', 'Back'],
@@ -25,8 +25,14 @@
         'dpadUp', 'dpadDown', 'dpadLeft', 'dpadRight', 'guide', 'touchpad'
     ]);
     const AXIS_KEY_ORDER = Object.freeze(['leftStickX', 'leftStickY', 'rightStickX', 'rightStickY']);
+    const AXIS_META = Object.freeze([
+        { key: 'leftStickX', label: 'Strum axis', help: 'Main horizontal stick / strum axis' },
+        { key: 'leftStickY', label: 'Whammy axis', help: 'Main vertical stick / whammy axis' },
+        { key: 'rightStickX', label: 'Alt axis X', help: 'Secondary horizontal axis' },
+        { key: 'rightStickY', label: 'Alt axis Y', help: 'Secondary vertical axis' },
+    ]);
     const DEFAULT_PROFILE = Object.freeze({
-        profileName: 'default-standard-pad',
+        profileName: DEFAULT_PROFILE_NAME,
         actions: Object.freeze({
             south: 'confirm',
             east: 'back',
@@ -63,6 +69,20 @@
         return value == null ? value : JSON.parse(JSON.stringify(value));
     }
 
+    function _slugName(value) {
+        return String(value || '')
+            .trim()
+            .replace(/\s+/g, '-')
+            .replace(/[^a-zA-Z0-9_-]/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/^-|-$/g, '') || 'profile';
+    }
+
+    function controllerKeyForGamepad(gamepad) {
+        if (!gamepad) return GLOBAL_CONTROLLER_KEY;
+        return `${String(gamepad.id || 'Unknown controller')}#${Number(gamepad.index || 0)}`;
+    }
+
     function _defaultProfile(controllerKey) {
         const next = _clone(DEFAULT_PROFILE);
         next.controllerKey = controllerKey || GLOBAL_CONTROLLER_KEY;
@@ -83,15 +103,10 @@
         };
     }
 
-    function controllerKeyForGamepad(gamepad) {
-        if (!gamepad) return GLOBAL_CONTROLLER_KEY;
-        return `${String(gamepad.id || 'Unknown controller')}#${Number(gamepad.index || 0)}`;
-    }
-
     function _ensureAxisCalibrationShape(value) {
         const next = value && typeof value === 'object' ? _clone(value) : {};
         const output = {};
-        AXIS_CALIBRATION_KEYS.forEach((axisKey) => {
+        AXIS_KEY_ORDER.forEach((axisKey) => {
             const axis = next[axisKey] && typeof next[axisKey] === 'object' ? next[axisKey] : {};
             const deadzone = Number(axis.deadzone);
             output[axisKey] = {
@@ -145,9 +160,7 @@
             controllers: {},
         };
         const controllerEntries = next.controllers && typeof next.controllers === 'object' ? Object.entries(next.controllers) : [];
-        if (!controllerEntries.length) {
-            return _defaultStore();
-        }
+        if (!controllerEntries.length) return _defaultStore();
         controllerEntries.forEach(([controllerKey, controllerValue]) => {
             const normalizedKey = String(controllerKey || GLOBAL_CONTROLLER_KEY);
             const profiles = controllerValue && typeof controllerValue === 'object' ? controllerValue.profiles : null;
@@ -175,7 +188,7 @@
         return output;
     }
 
-    function _storeProfile(value) {
+    function _storeRaw(value) {
         try {
             if (value == null) {
                 window.localStorage.removeItem(STORAGE_KEY);
@@ -188,7 +201,7 @@
         }
     }
 
-    function _readStore() {
+    function _readRaw() {
         try {
             const raw = window.localStorage.getItem(STORAGE_KEY);
             return raw ? JSON.parse(raw) : null;
@@ -198,7 +211,7 @@
     }
 
     function loadStore() {
-        const store = _ensureStoreShape(_readStore() || state.store || _defaultStore());
+        const store = _ensureStoreShape(_readRaw() || state.store || _defaultStore());
         state.store = store;
         state.selectedControllerKey = store.selectedControllerKey;
         return _clone(store);
@@ -208,7 +221,7 @@
         const shaped = _ensureStoreShape(store);
         state.store = shaped;
         state.selectedControllerKey = shaped.selectedControllerKey;
-        _storeProfile(shaped);
+        _storeRaw(shaped);
         return _clone(shaped);
     }
 
@@ -222,17 +235,38 @@
         return store.controllers[normalizedKey];
     }
 
+    function _activeControllerKey(preferred) {
+        const store = loadStore();
+        return String(preferred || store.selectedControllerKey || GLOBAL_CONTROLLER_KEY);
+    }
+
+    function _selectedProfileName(store, controllerKey) {
+        const bucket = _controllerBucket(store, controllerKey);
+        return store.selectedProfiles[controllerKey] || Object.keys(bucket.profiles)[0];
+    }
+
+    function _uniqueProfileName(store, controllerKey, requestedName) {
+        const bucket = _controllerBucket(store, controllerKey);
+        const base = _slugName(requestedName || 'profile');
+        let next = base;
+        let counter = 2;
+        while (bucket.profiles[next]) {
+            next = `${base}-${counter}`;
+            counter += 1;
+        }
+        return next;
+    }
+
     function listProfiles(controllerKey) {
         const store = loadStore();
-        const normalizedKey = String(controllerKey || store.selectedControllerKey || GLOBAL_CONTROLLER_KEY);
-        const bucket = _controllerBucket(store, normalizedKey);
-        return Object.keys(bucket.profiles);
+        const activeKey = _activeControllerKey(controllerKey);
+        return Object.keys(_controllerBucket(store, activeKey).profiles);
     }
 
     function selectController(controllerKey) {
         const store = loadStore();
         store.selectedControllerKey = controllerKey ? String(controllerKey) : null;
-        const activeKey = store.selectedControllerKey || GLOBAL_CONTROLLER_KEY;
+        const activeKey = _activeControllerKey(store.selectedControllerKey);
         _controllerBucket(store, activeKey);
         saveStore(store);
         render();
@@ -241,13 +275,11 @@
 
     function selectProfile(profileName, controllerKey) {
         const store = loadStore();
-        const activeControllerKey = String(controllerKey || store.selectedControllerKey || GLOBAL_CONTROLLER_KEY);
-        const bucket = _controllerBucket(store, activeControllerKey);
+        const activeKey = _activeControllerKey(controllerKey);
+        const bucket = _controllerBucket(store, activeKey);
         if (!bucket.profiles[profileName]) return false;
-        store.selectedProfiles[activeControllerKey] = profileName;
-        if (!store.selectedControllerKey && activeControllerKey !== GLOBAL_CONTROLLER_KEY) {
-            store.selectedControllerKey = activeControllerKey;
-        }
+        store.selectedProfiles[activeKey] = profileName;
+        if (activeKey !== GLOBAL_CONTROLLER_KEY) store.selectedControllerKey = activeKey;
         saveStore(store);
         render();
         return true;
@@ -255,11 +287,11 @@
 
     function loadProfile(controllerKey) {
         const store = loadStore();
-        const activeControllerKey = String(controllerKey || store.selectedControllerKey || GLOBAL_CONTROLLER_KEY);
-        const bucket = _controllerBucket(store, activeControllerKey);
-        const selectedName = store.selectedProfiles[activeControllerKey] || Object.keys(bucket.profiles)[0];
-        const profile = bucket.profiles[selectedName] || Object.values(bucket.profiles)[0] || _defaultProfile(activeControllerKey);
-        return _ensureProfileShape(profile, activeControllerKey);
+        const activeKey = _activeControllerKey(controllerKey);
+        const bucket = _controllerBucket(store, activeKey);
+        const selectedName = _selectedProfileName(store, activeKey);
+        const profile = bucket.profiles[selectedName] || Object.values(bucket.profiles)[0] || _defaultProfile(activeKey);
+        return _ensureProfileShape(profile, activeKey);
     }
 
     function saveProfile(profile) {
@@ -269,33 +301,75 @@
         const bucket = _controllerBucket(store, controllerKey);
         bucket.profiles[next.profileName] = next;
         store.selectedProfiles[controllerKey] = next.profileName;
-        if (controllerKey !== GLOBAL_CONTROLLER_KEY) {
-            store.selectedControllerKey = controllerKey;
-        }
+        if (controllerKey !== GLOBAL_CONTROLLER_KEY) store.selectedControllerKey = controllerKey;
         saveStore(store);
         state.currentProfile = next;
         render();
         return _clone(next);
     }
 
+    function createProfile(profileName, controllerKey) {
+        const store = loadStore();
+        const activeKey = _activeControllerKey(controllerKey);
+        const nextName = _uniqueProfileName(store, activeKey, profileName || 'new-profile');
+        const profile = _defaultProfile(activeKey);
+        profile.profileName = nextName;
+        return saveProfile(profile);
+    }
+
+    function duplicateCurrentProfile(profileName, controllerKey) {
+        const store = loadStore();
+        const activeKey = _activeControllerKey(controllerKey);
+        const current = loadProfile(activeKey);
+        const next = _clone(current);
+        next.profileName = _uniqueProfileName(store, activeKey, profileName || `${current.profileName}-copy`);
+        return saveProfile(next);
+    }
+
+    function renameSelectedProfile(nextName) {
+        const trimmed = String(nextName || '').trim();
+        if (!trimmed) return false;
+        const store = loadStore();
+        const current = loadProfile();
+        const bucket = _controllerBucket(store, current.controllerKey);
+        const targetName = current.profileName === trimmed ? trimmed : _uniqueProfileName(store, current.controllerKey, trimmed);
+        delete bucket.profiles[current.profileName];
+        current.profileName = targetName;
+        bucket.profiles[targetName] = _ensureProfileShape(current, current.controllerKey);
+        store.selectedProfiles[current.controllerKey] = targetName;
+        saveStore(store);
+        state.currentProfile = current;
+        render();
+        return true;
+    }
+
     function clearProfile(controllerKey, profileName) {
         const store = loadStore();
-        const activeControllerKey = String(controllerKey || store.selectedControllerKey || GLOBAL_CONTROLLER_KEY);
-        const bucket = _controllerBucket(store, activeControllerKey);
-        const selectedName = String(profileName || store.selectedProfiles[activeControllerKey] || Object.keys(bucket.profiles)[0]);
+        const activeKey = _activeControllerKey(controllerKey);
+        const bucket = _controllerBucket(store, activeKey);
+        const selectedName = String(profileName || _selectedProfileName(store, activeKey));
         delete bucket.profiles[selectedName];
         if (!Object.keys(bucket.profiles).length) {
-            const fallback = _defaultProfile(activeControllerKey);
+            const fallback = _defaultProfile(activeKey);
             bucket.profiles[fallback.profileName] = fallback;
-            store.selectedProfiles[activeControllerKey] = fallback.profileName;
-        } else if (!bucket.profiles[store.selectedProfiles[activeControllerKey]]) {
-            store.selectedProfiles[activeControllerKey] = Object.keys(bucket.profiles)[0];
+            store.selectedProfiles[activeKey] = fallback.profileName;
+        } else if (!bucket.profiles[store.selectedProfiles[activeKey]]) {
+            store.selectedProfiles[activeKey] = Object.keys(bucket.profiles)[0];
         }
         state.capture = null;
         saveStore(store);
-        state.currentProfile = loadProfile(activeControllerKey);
+        state.currentProfile = loadProfile(activeKey);
         render();
         return true;
+    }
+
+    function updateCalibration(partial) {
+        const profile = loadProfile();
+        profile.calibration = _ensureCalibrationShape(Object.assign({}, profile.calibration, partial || {}));
+        if (partial && partial.axes) {
+            profile.calibration.axes = _ensureAxisCalibrationShape(Object.assign({}, profile.calibration.axes, partial.axes));
+        }
+        return saveProfile(profile);
     }
 
     function normalizeGamepad(gamepad) {
@@ -338,10 +412,28 @@
         return Array.from(list || []).filter(Boolean).map(normalizeGamepad).filter(Boolean);
     }
 
-    function pickPrimaryGamepad(pads) {
+    function autoSelectController(pads) {
         const list = Array.isArray(pads) ? pads.filter(Boolean) : [];
         const store = loadStore();
+        if (!list.length) return store.selectedControllerKey;
         const selectedKey = store.selectedControllerKey;
+        if (selectedKey && list.some((pad) => pad.connected && pad.controllerKey === selectedKey)) {
+            return selectedKey;
+        }
+        const exactStored = list.find((pad) => pad.connected && store.controllers[pad.controllerKey]);
+        if (exactStored) {
+            store.selectedControllerKey = exactStored.controllerKey;
+            saveStore(store);
+            return exactStored.controllerKey;
+        }
+        const firstStandard = list.find((pad) => pad.connected && pad.mapping === 'standard');
+        if (firstStandard) return firstStandard.controllerKey;
+        return list.find((pad) => pad.connected)?.controllerKey || null;
+    }
+
+    function pickPrimaryGamepad(pads) {
+        const list = Array.isArray(pads) ? pads.filter(Boolean) : [];
+        const selectedKey = autoSelectController(list);
         if (selectedKey) {
             const exact = list.find((pad) => pad.connected && pad.controllerKey === selectedKey);
             if (exact) return exact;
@@ -412,35 +504,8 @@
         return null;
     }
 
-    function updateCalibration(partial) {
-        const profile = loadProfile();
-        profile.calibration = Object.assign({}, profile.calibration, partial || {});
-        if (partial && partial.axes) {
-            profile.calibration.axes = Object.assign({}, profile.calibration.axes, partial.axes);
-        }
-        return saveProfile(profile);
-    }
-
-    function renameSelectedProfile(nextName) {
-        const trimmed = String(nextName || '').trim();
-        if (!trimmed) return false;
-        const current = loadProfile();
-        const store = loadStore();
-        const bucket = _controllerBucket(store, current.controllerKey);
-        delete bucket.profiles[current.profileName];
-        current.profileName = trimmed;
-        bucket.profiles[trimmed] = _ensureProfileShape(current, current.controllerKey);
-        store.selectedProfiles[current.controllerKey] = trimmed;
-        saveStore(store);
-        state.currentProfile = current;
-        render();
-        return true;
-    }
-
     function _statusText(primary, pads) {
-        if (state.capture) {
-            return `Press a button or move an axis to map ${state.capture.actionName}.`;
-        }
+        if (state.capture) return `Press a button or move an axis to map ${state.capture.actionName}.`;
         if (!pads.length) return 'No controller detected yet.';
         if (!primary) return `${pads.length} controller(s) connected, but none expose the standard mapping yet.`;
         return `Selected controller: ${primary.id} (slot ${primary.index}).`;
@@ -456,21 +521,14 @@
         if (el && typeof el.value !== 'undefined') el.value = value;
     }
 
-    function _setChecked(id, value) {
-        const el = document.getElementById(id);
-        if (el && typeof el.checked !== 'undefined') el.checked = !!value;
-    }
-
     function _buttonClass(active) {
-        return active
-            ? 'border-blue-100/60 bg-blue-300/20 text-white shadow-[0_0_18px_rgba(96,165,250,0.22)]'
-            : 'border-white/12 bg-slate-950/35 text-blue-50/75';
+        return `fbci-tile${active ? ' is-active' : ''}`;
     }
 
     function _mappingButtonClass(active, armed) {
-        if (armed) return 'border-amber-300/60 bg-amber-300/15 text-amber-50';
-        if (active) return 'border-blue-100/60 bg-blue-300/20 text-white';
-        return 'border-white/12 bg-white/[0.04] text-blue-50/85 hover:border-blue-100/35 hover:bg-white/[0.08]';
+        if (armed) return 'fbci-map-btn is-armed';
+        if (active) return 'fbci-map-btn is-active';
+        return 'fbci-map-btn';
     }
 
     function _renderControllerOptions(pads, selectedKey) {
@@ -498,9 +556,9 @@
         if (!host) return;
         host.innerHTML = ACTION_ORDER.map(([key, label]) => {
             const active = summary.buttons.includes(key) || summary.axes.includes(key);
-            return `<div data-live-input="${key}" class="rounded-2xl border px-3 py-2 transition ${_buttonClass(active)}">
-                <div class="text-[10px] uppercase tracking-[0.24em] opacity-70">${key}</div>
-                <div class="text-sm font-medium">${label}</div>
+            return `<div data-live-input="${key}" class="${_buttonClass(active)}">
+                <div class="fbci-tile-key">${key}</div>
+                <div class="fbci-tile-label">${label}</div>
             </div>`;
         }).join('');
     }
@@ -512,107 +570,132 @@
             const armed = !!(state.capture && state.capture.actionKey === actionKey);
             const boundInput = Object.entries(profile.actions || {}).find(([, value]) => value === actionKey)?.[0] || 'not set';
             const active = boundInput !== 'not set' && (summary.buttons.includes(boundInput) || summary.axes.includes(boundInput));
-            return `<button type="button" data-map-action="${actionKey}" class="feedback-contoller-input-map-btn rounded-2xl border px-3 py-3 text-left transition ${_mappingButtonClass(active, armed)}">
-                <div class="text-[10px] uppercase tracking-[0.24em] opacity-70">${armed ? 'Listening…' : boundInput}</div>
-                <div class="text-sm font-semibold">${label}</div>
-                <div class="mt-1 text-xs opacity-70">${profile.actions[actionKey] || actionKey}</div>
+            return `<button type="button" data-map-action="${actionKey}" class="${_mappingButtonClass(active, armed)}">
+                <div class="fbci-map-top">${armed ? 'Listening…' : boundInput}</div>
+                <div class="fbci-map-label">${label}</div>
+                <div class="fbci-map-value">${profile.actions[actionKey] || actionKey}</div>
             </button>`;
         }).join('');
         host.querySelectorAll('[data-map-action]').forEach((button) => {
-            if (button.__controllerLabBound) return;
-            button.__controllerLabBound = true;
+            if (button.__fbciBound) return;
+            button.__fbciBound = true;
             button.addEventListener('click', () => beginCapture(button.getAttribute('data-map-action')));
+        });
+    }
+
+    function _renderAxisCards(profile) {
+        const host = document.getElementById('feedback-contoller-input-axis-grid');
+        if (!host) return;
+        host.innerHTML = AXIS_META.map((axis) => {
+            const config = profile.calibration.axes[axis.key] || { deadzone: 0, invert: false };
+            return `<div class="fbci-axis-card">
+                <div class="fbci-axis-title-row">
+                    <div>
+                        <div class="fbci-axis-title">${axis.label}</div>
+                        <div class="fbci-axis-help">${axis.help}</div>
+                    </div>
+                    <div class="fbci-axis-key">${axis.key}</div>
+                </div>
+                <label class="fbci-field">
+                    <span>Deadzone</span>
+                    <input data-axis-deadzone="${axis.key}" type="number" min="0" max="1" step="0.01" value="${config.deadzone}" />
+                </label>
+                <label class="fbci-checkbox-row">
+                    <input data-axis-invert="${axis.key}" type="checkbox" ${config.invert ? 'checked' : ''} />
+                    <span>Invert axis</span>
+                </label>
+            </div>`;
+        }).join('');
+        host.querySelectorAll('[data-axis-deadzone]').forEach((input) => {
+            if (input.__fbciBound) return;
+            input.__fbciBound = true;
+            input.addEventListener('change', () => {
+                const axisKey = input.getAttribute('data-axis-deadzone');
+                const invertEl = host.querySelector(`[data-axis-invert="${axisKey}"]`);
+                updateCalibration({ axes: { [axisKey]: { deadzone: Number(input.value), invert: !!(invertEl && invertEl.checked) } } });
+            });
+        });
+        host.querySelectorAll('[data-axis-invert]').forEach((input) => {
+            if (input.__fbciBound) return;
+            input.__fbciBound = true;
+            input.addEventListener('change', () => {
+                const axisKey = input.getAttribute('data-axis-invert');
+                const deadzoneEl = host.querySelector(`[data-axis-deadzone="${axisKey}"]`);
+                updateCalibration({ axes: { [axisKey]: { deadzone: Number(deadzoneEl && deadzoneEl.value || 0), invert: !!input.checked } } });
+            });
         });
     }
 
     function _bindControls() {
         const refreshBtn = document.getElementById('feedback-contoller-input-refresh');
-        const saveBtn = document.getElementById('feedback-contoller-input-save-default');
+        const resetBtn = document.getElementById('feedback-contoller-input-save-default');
         const clearBtn = document.getElementById('feedback-contoller-input-clear-profile');
         const cancelBtn = document.getElementById('feedback-contoller-input-cancel-capture');
         const controllerSelect = document.getElementById('feedback-contoller-input-controller-select');
         const profileSelect = document.getElementById('feedback-contoller-input-profile-select');
         const profileNameInput = document.getElementById('feedback-contoller-input-profile-name');
-        const saveNamedBtn = document.getElementById('feedback-contoller-input-save-named');
+        const renameBtn = document.getElementById('feedback-contoller-input-save-named');
+        const newBtn = document.getElementById('feedback-contoller-input-new-profile');
+        const duplicateBtn = document.getElementById('feedback-contoller-input-duplicate-profile');
         const thresholdInput = document.getElementById('feedback-contoller-input-axis-threshold');
-        const leftDeadzoneInput = document.getElementById('feedback-contoller-input-leftStickX-deadzone');
-        const leftInvertInput = document.getElementById('feedback-contoller-input-leftStickX-invert');
-        const whammyDeadzoneInput = document.getElementById('feedback-contoller-input-leftStickY-deadzone');
-        const whammyInvertInput = document.getElementById('feedback-contoller-input-leftStickY-invert');
 
-        if (refreshBtn && !refreshBtn.__controllerLabBound) {
-            refreshBtn.__controllerLabBound = true;
+        if (refreshBtn && !refreshBtn.__fbciBound) {
+            refreshBtn.__fbciBound = true;
             refreshBtn.addEventListener('click', render);
         }
-        if (saveBtn && !saveBtn.__controllerLabBound) {
-            saveBtn.__controllerLabBound = true;
-            saveBtn.addEventListener('click', () => {
+        if (resetBtn && !resetBtn.__fbciBound) {
+            resetBtn.__fbciBound = true;
+            resetBtn.addEventListener('click', () => {
                 const profile = loadProfile();
                 profile.actions = _defaultProfile(profile.controllerKey).actions;
                 saveProfile(profile);
             });
         }
-        if (clearBtn && !clearBtn.__controllerLabBound) {
-            clearBtn.__controllerLabBound = true;
+        if (clearBtn && !clearBtn.__fbciBound) {
+            clearBtn.__fbciBound = true;
             clearBtn.addEventListener('click', () => clearProfile());
         }
-        if (cancelBtn && !cancelBtn.__controllerLabBound) {
-            cancelBtn.__controllerLabBound = true;
+        if (cancelBtn && !cancelBtn.__fbciBound) {
+            cancelBtn.__fbciBound = true;
             cancelBtn.addEventListener('click', cancelCapture);
         }
-        if (controllerSelect && !controllerSelect.__controllerLabBound) {
-            controllerSelect.__controllerLabBound = true;
+        if (controllerSelect && !controllerSelect.__fbciBound) {
+            controllerSelect.__fbciBound = true;
             controllerSelect.addEventListener('change', () => selectController(controllerSelect.value || null));
         }
-        if (profileSelect && !profileSelect.__controllerLabBound) {
-            profileSelect.__controllerLabBound = true;
+        if (profileSelect && !profileSelect.__fbciBound) {
+            profileSelect.__fbciBound = true;
             profileSelect.addEventListener('change', () => selectProfile(profileSelect.value));
         }
-        if (saveNamedBtn && !saveNamedBtn.__controllerLabBound) {
-            saveNamedBtn.__controllerLabBound = true;
-            saveNamedBtn.addEventListener('click', () => renameSelectedProfile(profileNameInput && profileNameInput.value));
+        if (renameBtn && !renameBtn.__fbciBound) {
+            renameBtn.__fbciBound = true;
+            renameBtn.addEventListener('click', () => renameSelectedProfile(profileNameInput && profileNameInput.value));
         }
-        if (thresholdInput && !thresholdInput.__controllerLabBound) {
-            thresholdInput.__controllerLabBound = true;
+        if (newBtn && !newBtn.__fbciBound) {
+            newBtn.__fbciBound = true;
+            newBtn.addEventListener('click', () => createProfile(profileNameInput && profileNameInput.value || 'new-profile'));
+        }
+        if (duplicateBtn && !duplicateBtn.__fbciBound) {
+            duplicateBtn.__fbciBound = true;
+            duplicateBtn.addEventListener('click', () => duplicateCurrentProfile(profileNameInput && profileNameInput.value || 'profile-copy'));
+        }
+        if (thresholdInput && !thresholdInput.__fbciBound) {
+            thresholdInput.__fbciBound = true;
             thresholdInput.addEventListener('change', () => updateCalibration({ axisThreshold: Number(thresholdInput.value) }));
-        }
-        if (leftDeadzoneInput && !leftDeadzoneInput.__controllerLabBound) {
-            leftDeadzoneInput.__controllerLabBound = true;
-            leftDeadzoneInput.addEventListener('change', () => updateCalibration({ axes: { leftStickX: { deadzone: Number(leftDeadzoneInput.value), invert: !!(leftInvertInput && leftInvertInput.checked) } } }));
-        }
-        if (leftInvertInput && !leftInvertInput.__controllerLabBound) {
-            leftInvertInput.__controllerLabBound = true;
-            leftInvertInput.addEventListener('change', () => updateCalibration({ axes: { leftStickX: { deadzone: Number(leftDeadzoneInput && leftDeadzoneInput.value || 0), invert: !!leftInvertInput.checked } } }));
-        }
-        if (whammyDeadzoneInput && !whammyDeadzoneInput.__controllerLabBound) {
-            whammyDeadzoneInput.__controllerLabBound = true;
-            whammyDeadzoneInput.addEventListener('change', () => updateCalibration({ axes: { leftStickY: { deadzone: Number(whammyDeadzoneInput.value), invert: !!(whammyInvertInput && whammyInvertInput.checked) } } }));
-        }
-        if (whammyInvertInput && !whammyInvertInput.__controllerLabBound) {
-            whammyInvertInput.__controllerLabBound = true;
-            whammyInvertInput.addEventListener('change', () => updateCalibration({ axes: { leftStickY: { deadzone: Number(whammyDeadzoneInput && whammyDeadzoneInput.value || 0), invert: !!whammyInvertInput.checked } } }));
         }
     }
 
     function render() {
         _bindControls();
-        const store = loadStore();
         const pads = readGamepads();
         state.lastPads = pads;
-        if (!store.selectedControllerKey && pads.length === 1) {
-            store.selectedControllerKey = pads[0].controllerKey;
-            saveStore(store);
-        }
         const primary = pickPrimaryGamepad(pads);
         state.lastPrimary = primary;
-        if (primary && !store.selectedControllerKey) {
-            state.selectedControllerKey = primary.controllerKey;
-        }
         captureInputFromPrimary(primary);
         const liveSummary = getLiveSummary(primary);
         state.liveInputs = liveSummary;
-        const profile = state.currentProfile = loadProfile(primary ? primary.controllerKey : undefined);
-        const activeControllerKey = (primary && primary.controllerKey) || store.selectedControllerKey || GLOBAL_CONTROLLER_KEY;
+        const activeControllerKey = (primary && primary.controllerKey) || autoSelectController(pads) || GLOBAL_CONTROLLER_KEY;
+        const profile = state.currentProfile = loadProfile(activeControllerKey);
         const profileNames = listProfiles(activeControllerKey);
 
         _setText('feedback-contoller-input-status', _statusText(primary, pads));
@@ -625,19 +708,16 @@
             ? `Listening for input to map ${state.capture.actionName} on ${state.capture.profileName}.`
             : 'Pick a controller, choose a profile, then click a tile to remap it.');
 
-        _renderControllerOptions(pads, primary ? primary.controllerKey : store.selectedControllerKey);
+        _renderControllerOptions(pads, activeControllerKey);
         _renderProfileOptions(profileNames, profile.profileName);
         _setValue('feedback-contoller-input-profile-name', profile.profileName);
         _setValue('feedback-contoller-input-axis-threshold', profile.calibration.axisThreshold);
-        _setValue('feedback-contoller-input-leftStickX-deadzone', profile.calibration.axes.leftStickX.deadzone);
-        _setChecked('feedback-contoller-input-leftStickX-invert', profile.calibration.axes.leftStickX.invert);
-        _setValue('feedback-contoller-input-leftStickY-deadzone', profile.calibration.axes.leftStickY.deadzone);
-        _setChecked('feedback-contoller-input-leftStickY-invert', profile.calibration.axes.leftStickY.invert);
 
         const cancelBtn = document.getElementById('feedback-contoller-input-cancel-capture');
         if (cancelBtn) cancelBtn.disabled = !state.capture;
 
         _renderLiveInputs(liveSummary);
+        _renderAxisCards(profile);
         _renderMappingButtons(profile, liveSummary);
         return {
             pads,
@@ -645,7 +725,7 @@
             profile,
             liveSummary,
             capture: state.capture ? _clone(state.capture) : null,
-            store: _clone(store),
+            store: loadStore(),
         };
     }
 
@@ -666,13 +746,15 @@
     }
 
     window.feedBackFeedbackContollerInput = {
-        version: 3,
+        version: 4,
         storageKey: STORAGE_KEY,
         actionOrder: ACTION_ORDER.map(([key, label]) => ({ key, label })),
+        axisMeta: AXIS_META.map((axis) => Object.assign({}, axis)),
         defaultProfile: _defaultProfile(),
         controllerKeyForGamepad,
         normalizeGamepad,
         readGamepads,
+        autoSelectController,
         pickPrimaryGamepad,
         getPressedButtons,
         getActiveAxes,
@@ -689,6 +771,8 @@
         listProfiles,
         selectController,
         selectProfile,
+        createProfile,
+        duplicateCurrentProfile,
         updateCalibration,
         renameSelectedProfile,
         render,
