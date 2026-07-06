@@ -1,7 +1,7 @@
 (function () {
     'use strict';
 
-    const STORAGE_KEY = 'feedBack.controllerInputLab.profile';
+    const STORAGE_KEY = 'feedBack.feedbackContollerInput.profile';
     const POLL_MS = 150;
     const ACTION_ORDER = Object.freeze([
         ['south', 'Confirm'],
@@ -40,7 +40,7 @@
         })
     });
 
-    const state = window.__feedBackControllerInputLab || (window.__feedBackControllerInputLab = {});
+    const state = window.__feedBackFeedbackContollerInput || (window.__feedBackFeedbackContollerInput = {});
     if (state.installed) return;
     state.installed = true;
     state.lastPads = [];
@@ -228,7 +228,7 @@
     }
 
     function _renderLiveInputs(summary) {
-        const host = document.getElementById('controller-lab-live-inputs');
+        const host = document.getElementById('feedback-contoller-input-live-inputs');
         if (!host) return;
         host.innerHTML = ACTION_ORDER.map(([key, label]) => {
             const active = summary.buttons.includes(key) || summary.axes.includes(key);
@@ -240,13 +240,13 @@
     }
 
     function _renderMappingButtons(profile, summary) {
-        const host = document.getElementById('controller-lab-mapping-grid');
+        const host = document.getElementById('feedback-contoller-input-mapping-grid');
         if (!host) return;
         host.innerHTML = ACTION_ORDER.map(([actionKey, label]) => {
             const armed = !!(state.capture && state.capture.actionKey === actionKey);
             const boundInput = Object.entries(profile.actions || {}).find(([, value]) => value === actionKey)?.[0] || 'not set';
             const active = boundInput !== 'not set' && (summary.buttons.includes(boundInput) || summary.axes.includes(boundInput));
-            return `<button type="button" data-map-action="${actionKey}" class="controller-lab-map-btn rounded-2xl border px-3 py-3 text-left transition ${_mappingButtonClass(active, armed)}">
+            return `<button type="button" data-map-action="${actionKey}" class="feedback-contoller-input-map-btn rounded-2xl border px-3 py-3 text-left transition ${_mappingButtonClass(active, armed)}">
                 <div class="text-[10px] uppercase tracking-[0.24em] opacity-70">${armed ? 'Listening…' : boundInput}</div>
                 <div class="text-sm font-semibold">${label}</div>
                 <div class="mt-1 text-xs opacity-70">${profile.actions[actionKey] || actionKey}</div>
@@ -260,10 +260,10 @@
     }
 
     function _bindControls() {
-        const refreshBtn = document.getElementById('controller-lab-refresh');
-        const saveBtn = document.getElementById('controller-lab-save-default');
-        const clearBtn = document.getElementById('controller-lab-clear-profile');
-        const cancelBtn = document.getElementById('controller-lab-cancel-capture');
+        const refreshBtn = document.getElementById('feedback-contoller-input-refresh');
+        const saveBtn = document.getElementById('feedback-contoller-input-save-default');
+        const clearBtn = document.getElementById('feedback-contoller-input-clear-profile');
+        const cancelBtn = document.getElementById('feedback-contoller-input-cancel-capture');
         if (refreshBtn && !refreshBtn.__controllerLabBound) {
             refreshBtn.__controllerLabBound = true;
             refreshBtn.addEventListener('click', render);
@@ -293,17 +293,17 @@
         state.liveInputs = liveSummary;
         const profile = state.currentProfile = loadProfile();
 
-        _setText('controller-lab-status', _statusText(primary, pads));
-        _setText('controller-lab-primary', primary
+        _setText('feedback-contoller-input-status', _statusText(primary, pads));
+        _setText('feedback-contoller-input-primary', primary
             ? `${primary.id}\nButtons pressed: ${getPressedButtons(primary).map((button) => button.key).join(', ') || 'none'}\nAxes active: ${getActiveAxes(primary).map((axis) => `${axis.key}=${axis.value}`).join(', ') || 'none'}`
             : 'Waiting for a standard browser gamepad…');
-        _setText('controller-lab-pads', JSON.stringify(pads, null, 2));
-        _setText('controller-lab-profile', JSON.stringify(profile, null, 2));
-        _setText('controller-lab-capture-status', state.capture
+        _setText('feedback-contoller-input-pads', JSON.stringify(pads, null, 2));
+        _setText('feedback-contoller-input-profile', JSON.stringify(profile, null, 2));
+        _setText('feedback-contoller-input-capture-status', state.capture
             ? `Listening for input to map ${state.capture.actionName}.`
             : 'Click a tile below, then press a controller button to remap it.');
 
-        const cancelBtn = document.getElementById('controller-lab-cancel-capture');
+        const cancelBtn = document.getElementById('feedback-contoller-input-cancel-capture');
         if (cancelBtn) cancelBtn.disabled = !state.capture;
 
         _renderLiveInputs(liveSummary);
@@ -327,7 +327,7 @@
         return true;
     }
 
-    window.feedBackControllerInputLab = {
+    window.feedBackFeedbackContollerInput = {
         version: 2,
         storageKey: STORAGE_KEY,
         actionOrder: ACTION_ORDER.map(([key, label]) => ({ key, label })),
