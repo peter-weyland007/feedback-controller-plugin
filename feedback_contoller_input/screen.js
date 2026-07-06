@@ -4,6 +4,7 @@
     const STORAGE_KEY = 'feedBack.feedbackContollerInput.profile';
     const POLL_MS = 150;
     const DEFAULT_AXIS_THRESHOLD = 0.35;
+    const PLUGIN_ID = 'feedback_contoller_input';
     const GLOBAL_CONTROLLER_KEY = 'default-standard-pad#global';
     const DEFAULT_PROFILE_NAME = 'default-standard-pad';
     const ACTION_ORDER = Object.freeze([
@@ -67,6 +68,53 @@
 
     function _clone(value) {
         return value == null ? value : JSON.parse(JSON.stringify(value));
+    }
+
+    function _queryAll(selector) {
+        if (!document || typeof document.querySelectorAll !== 'function') return [];
+        try {
+            return Array.from(document.querySelectorAll(selector) || []);
+        } catch (_) {
+            return [];
+        }
+    }
+
+    function _styleHrefFromScriptTag(script) {
+        const src = script && script.src ? String(script.src) : '';
+        if (!src || src.indexOf(`/api/plugins/${PLUGIN_ID}/screen.js`) === -1) return null;
+        return src.replace('/screen.js', '/assets/plugin.css');
+    }
+
+    function _resolvePluginStyleHref() {
+        const currentHref = _styleHrefFromScriptTag(document && document.currentScript);
+        if (currentHref) return currentHref;
+        const scripts = _queryAll('script[src]');
+        for (let index = scripts.length - 1; index >= 0; index -= 1) {
+            const href = _styleHrefFromScriptTag(scripts[index]);
+            if (href) return href;
+        }
+        return null;
+    }
+
+    function ensureStyles() {
+        if (!document || typeof document.createElement !== 'function') return null;
+        const existing = _queryAll('link[rel="stylesheet"]').find((link) => {
+            const href = String(link && link.href || '');
+            return href.indexOf(`/api/plugins/${PLUGIN_ID}/assets/plugin.css`) !== -1;
+        });
+        if (existing) return existing.href;
+        const href = _resolvePluginStyleHref();
+        if (!href) return null;
+        const link = document.createElement('link');
+        link.rel = 'stylesheet';
+        link.href = href;
+        link.dataset = link.dataset || {};
+        link.dataset.fbciFallbackStyle = PLUGIN_ID;
+        const head = document.head || _queryAll('head')[0] || document.documentElement || document.body;
+        if (head && typeof head.appendChild === 'function') {
+            head.appendChild(link);
+        }
+        return href;
     }
 
     function _slugName(value) {
@@ -428,7 +476,8 @@
         }
         const firstStandard = list.find((pad) => pad.connected && pad.mapping === 'standard');
         if (firstStandard) return firstStandard.controllerKey;
-        return list.find((pad) => pad.connected)?.controllerKey || null;
+        const connectedPad = list.find((pad) => pad.connected);
+        return connectedPad ? connectedPad.controllerKey : null;
     }
 
     function pickPrimaryGamepad(pads) {
@@ -568,7 +617,8 @@
         if (!host) return;
         host.innerHTML = ACTION_ORDER.map(([actionKey, label]) => {
             const armed = !!(state.capture && state.capture.actionKey === actionKey);
-            const boundInput = Object.entries(profile.actions || {}).find(([, value]) => value === actionKey)?.[0] || 'not set';
+            const boundEntry = Object.entries(profile.actions || {}).find(([, value]) => value === actionKey);
+            const boundInput = boundEntry ? boundEntry[0] : 'not set';
             const active = boundInput !== 'not set' && (summary.buttons.includes(boundInput) || summary.axes.includes(boundInput));
             return `<button type="button" data-map-action="${actionKey}" class="${_mappingButtonClass(active, armed)}">
                 <div class="fbci-map-top">${armed ? 'Listening…' : boundInput}</div>
@@ -739,6 +789,7 @@
     }
 
     function mount() {
+        ensureStyles();
         _bindControls();
         render();
         _schedulePoll();
@@ -775,6 +826,7 @@
         duplicateCurrentProfile,
         updateCalibration,
         renameSelectedProfile,
+        ensureStyles,
         render,
         mount,
     };

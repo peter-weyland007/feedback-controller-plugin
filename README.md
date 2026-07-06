@@ -100,7 +100,9 @@ You can tune:
 ## Troubleshooting
 
 ### The plugin appears but looks blank / unstyled
-That specific packaging problem is what `0.6.0` fixes.
+That specific packaging problem is what `0.6.1` fixes.
+
+`0.6.1` also adds a JS fallback that injects the plugin stylesheet itself when the host app is older and does not auto-load plugin `styles` yet.
 
 Make sure all of these files are present:
 
@@ -146,7 +148,7 @@ feedback_contoller_input/
 ## Version
 
 Current packaged plugin version:
-- `0.6.0`
+- `0.6.1`
 
 ## License
 
