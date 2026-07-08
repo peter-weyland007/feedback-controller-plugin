@@ -580,24 +580,48 @@
         return 'fbci-map-btn';
     }
 
+    function _renderSelectOptions(host, optionsHtml, value, disabled) {
+        if (!host) return;
+        const nextValue = value == null ? '' : String(value);
+        const signature = `${disabled ? '1' : '0'}|${nextValue}|${optionsHtml}`;
+        // Native <select> menus can become unusable if we rewrite their options
+        // while the user is interacting with them. The plugin polls every 150 ms,
+        // so avoid replacing the DOM while the control itself has focus.
+        if (document.activeElement === host) {
+            host.disabled = !!disabled;
+            return;
+        }
+        if (host.dataset.fbciSig !== signature) {
+            host.innerHTML = optionsHtml;
+            host.dataset.fbciSig = signature;
+        }
+        host.disabled = !!disabled;
+        if (host.value !== nextValue) host.value = nextValue;
+    }
+
     function _renderControllerOptions(pads, selectedKey) {
         const host = document.getElementById('feedback-contoller-input-controller-select');
         if (!host) return;
-        const options = pads.map((pad) => {
-            const selected = pad.controllerKey === selectedKey ? ' selected' : '';
-            return `<option value="${pad.controllerKey}"${selected}>${pad.id} · slot ${pad.index}</option>`;
-        });
-        if (!options.length) options.push('<option value="">No controller detected</option>');
-        host.innerHTML = options.join('');
+        const options = pads.map((pad) =>
+            `<option value="${pad.controllerKey}">${pad.id} · slot ${pad.index}</option>`
+        );
+        if (!options.length) {
+            _renderSelectOptions(host, '<option value="">No controller detected</option>', '', true);
+            return;
+        }
+        const nextValue = pads.some((pad) => pad.controllerKey === selectedKey)
+            ? selectedKey
+            : pads[0].controllerKey;
+        _renderSelectOptions(host, options.join(''), nextValue, false);
     }
 
     function _renderProfileOptions(profileNames, selectedName) {
         const host = document.getElementById('feedback-contoller-input-profile-select');
         if (!host) return;
-        host.innerHTML = profileNames.map((name) => {
-            const selected = name === selectedName ? ' selected' : '';
-            return `<option value="${name}"${selected}>${name}</option>`;
-        }).join('');
+        const names = Array.isArray(profileNames) && profileNames.length ? profileNames : ['default-standard-pad'];
+        const optionsHtml = names.map((name) => `<option value="${name}">${name}</option>`).join('');
+        const nextValue = names.includes(selectedName) ? selectedName : names[0];
+        _renderSelectOptions(host, optionsHtml, nextValue, false);
     }
 
     function _renderLiveInputs(summary) {

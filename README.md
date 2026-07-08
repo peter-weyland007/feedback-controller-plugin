@@ -1,4 +1,4 @@
-# fee[dB]ack feedback-contoller-input
+# fee[dB]ack Controller Support
 
 A standalone plugin for **fee[dB]ack** that adds a controller-input sandbox screen.
 
@@ -70,7 +70,7 @@ If fee[dB]ack was already open, fully quit and reopen it.
 
 In fee[dB]ack:
 - **Plugins**
-- **Controllers**
+- **Controller Support**
 
 ## How to use it
 
@@ -100,9 +100,13 @@ You can tune:
 ## Troubleshooting
 
 ### The plugin appears but looks blank / unstyled
-That specific packaging problem is what `0.6.1` fixes.
+That specific packaging problem is what `0.6.6` fixes.
 
-`0.6.1` also adds a JS fallback that injects the plugin stylesheet itself when the host app is older and does not auto-load plugin `styles` yet.
+`0.6.6` also keeps the standalone package aligned with the live Feedback plugin UI:
+- visible **Controller Support** naming
+- visible in-screen version label
+- safer `<select>` rendering so controller/profile dropdowns do not constantly reset while you interact with them
+- JS fallback that injects the plugin stylesheet itself when the host app is older and does not auto-load plugin `styles` yet.
 
 Make sure all of these files are present:
 
@@ -148,7 +152,7 @@ feedback_contoller_input/
 ## Version
 
 Current packaged plugin version:
-- `0.6.1`
+- `0.6.6`
 
 ## License
 
