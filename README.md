@@ -31,7 +31,7 @@ This is now fixed by shipping:
 After unzip, you should have:
 
 ```text
-feedback_contoller_input/
+feedback_controller_plugin/
   plugin.json
   screen.html
   screen.js
@@ -44,7 +44,7 @@ feedback_contoller_input/
 Example:
 
 ```text
-~/feedback-plugins/feedback_contoller_input/
+~/feedback-plugins/feedback_controller_plugin/
 ```
 
 ### 3. Launch fee[dB]ack with `FEEDBACK_PLUGINS_DIR`
@@ -111,7 +111,7 @@ That specific packaging problem is what `0.6.6` fixes.
 Make sure all of these files are present:
 
 ```text
-feedback_contoller_input/
+feedback_controller_plugin/
   plugin.json
   screen.html
   screen.js
@@ -120,7 +120,7 @@ feedback_contoller_input/
 
 ### I installed it but do not see it
 Check:
-- the folder name is exactly `feedback_contoller_input`
+- the folder name is exactly `feedback_controller_plugin`
 - `plugin.json` is inside that folder
 - `FEEDBACK_PLUGINS_DIR` points to the parent folder
 - fee[dB]ack was restarted after install
@@ -129,19 +129,19 @@ Correct:
 
 ```text
 FEEDBACK_PLUGINS_DIR=~/feedback-plugins
-~/feedback-plugins/feedback_contoller_input/plugin.json
+~/feedback-plugins/feedback_controller_plugin/plugin.json
 ```
 
 Wrong:
 
 ```text
-FEEDBACK_PLUGINS_DIR=~/feedback-plugins/feedback_contoller_input
+FEEDBACK_PLUGINS_DIR=~/feedback-plugins/feedback_controller_plugin
 ```
 
 ## Repository contents
 
 ```text
-feedback_contoller_input/
+feedback_controller_plugin/
   plugin.json
   screen.html
   screen.js

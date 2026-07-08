@@ -46,7 +46,7 @@
 
 .fbci-hero p:last-child,
 .fbci-panel > div > p,
-#feedback-contoller-input-status,
+#feedback-controller-plugin-status,
 .fbci-section-head span,
 .fbci-axis-help,
 .fbci-map-value,
@@ -80,7 +80,7 @@
 }
 
 .fbci-panel > div > p,
-#feedback-contoller-input-status {
+#feedback-controller-plugin-status {
   margin: 0;
   font-size: 0.9rem;
 }

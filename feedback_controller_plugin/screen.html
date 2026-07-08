@@ -1,0 +1,86 @@
+<section id="feedback-controller-plugin-screen" class="fbci-screen">
+  <div class="fbci-shell">
+    <header class="fbci-hero">
+      <p class="fbci-eyebrow">Controller Support</p>
+      <h2>Controller Support</h2>
+      <p class="fbci-version">Version <span id="feedback-controller-plugin-version">0.6.6</span></p>
+      <p>Choose a controller, save a named profile, and calibrate strum / whammy behavior before any generic controller layer moves into core.</p>
+    </header>
+
+    <div class="fbci-layout">
+      <div class="fbci-column">
+        <section class="fbci-panel">
+          <div class="fbci-panel-head">
+            <div>
+              <h3>Live controller state</h3>
+              <p id="feedback-controller-plugin-status">No controller detected yet.</p>
+            </div>
+            <button id="feedback-controller-plugin-refresh" type="button">Refresh</button>
+          </div>
+
+          <div class="fbci-two-up">
+            <label class="fbci-field">
+              <span>Selected controller</span>
+              <select id="feedback-controller-plugin-controller-select"></select>
+            </label>
+            <label class="fbci-field">
+              <span>Named profile</span>
+              <select id="feedback-controller-plugin-profile-select"></select>
+            </label>
+          </div>
+
+          <pre id="feedback-controller-plugin-primary" class="fbci-status-box">Waiting for a standard browser gamepad…</pre>
+
+          <div class="fbci-section-head">
+            <h4>Live button highlight</h4>
+            <span>Lights up when inputs are active</span>
+          </div>
+          <div id="feedback-controller-plugin-live-inputs" class="fbci-live-grid"></div>
+          <pre id="feedback-controller-plugin-pads" class="fbci-json-box">[]</pre>
+        </section>
+
+        <section class="fbci-panel">
+          <div>
+            <h3>Calibration</h3>
+            <p>Set per-profile threshold, deadzones, and inversion for every standard axis.</p>
+          </div>
+
+          <div class="fbci-two-up fbci-top-controls">
+            <label class="fbci-field">
+              <span>Axis threshold</span>
+              <input id="feedback-controller-plugin-axis-threshold" type="number" min="0" max="1" step="0.01" />
+            </label>
+            <div class="fbci-field">
+              <span>Profile tools</span>
+              <div class="fbci-profile-tools">
+                <input id="feedback-controller-plugin-profile-name" type="text" />
+                <button id="feedback-controller-plugin-save-named" type="button">Rename</button>
+                <button id="feedback-controller-plugin-new-profile" type="button">New</button>
+                <button id="feedback-controller-plugin-duplicate-profile" type="button">Duplicate</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="feedback-controller-plugin-axis-grid" class="fbci-axis-grid"></div>
+        </section>
+      </div>
+
+      <section class="fbci-panel">
+        <div>
+          <h3>Interactive mapping</h3>
+          <p>Click an action tile, then press a controller button or move an axis to remap it for the selected controller + profile.</p>
+        </div>
+        <div class="fbci-callout">
+          <div id="feedback-controller-plugin-capture-status">Pick a controller, choose a profile, then click a tile to remap it.</div>
+          <button id="feedback-controller-plugin-cancel-capture" type="button">Cancel listening</button>
+        </div>
+        <div id="feedback-controller-plugin-mapping-grid" class="fbci-map-grid"></div>
+        <pre id="feedback-controller-plugin-profile" class="fbci-json-box"></pre>
+        <div class="fbci-actions">
+          <button id="feedback-controller-plugin-save-default" type="button">Reset mappings to default</button>
+          <button id="feedback-controller-plugin-clear-profile" type="button">Delete selected profile</button>
+        </div>
+      </section>
+    </div>
+  </div>
+</section>

@@ -1,12 +1,12 @@
 {
-  "id": "feedback_contoller_input",
+  "id": "feedback_controller_plugin",
   "name": "Controller Support",
   "version": "0.6.6",
   "bundled": false,
   "private": false,
   "nav": {
     "label": "Controllers",
-    "screen": "plugin-feedback_contoller_input"
+    "screen": "plugin-feedback_controller_plugin"
   },
   "screen": "screen.html",
   "script": "screen.js",

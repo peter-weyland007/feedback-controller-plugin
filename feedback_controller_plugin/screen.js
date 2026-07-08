@@ -4,7 +4,7 @@
     const STORAGE_KEY = 'feedBack.feedbackContollerInput.profile';
     const POLL_MS = 150;
     const DEFAULT_AXIS_THRESHOLD = 0.35;
-    const PLUGIN_ID = 'feedback_contoller_input';
+    const PLUGIN_ID = 'feedback_controller_plugin';
     const GLOBAL_CONTROLLER_KEY = 'default-standard-pad#global';
     const DEFAULT_PROFILE_NAME = 'default-standard-pad';
     const ACTION_ORDER = Object.freeze([
@@ -600,7 +600,7 @@
     }
 
     function _renderControllerOptions(pads, selectedKey) {
-        const host = document.getElementById('feedback-contoller-input-controller-select');
+        const host = document.getElementById('feedback-controller-plugin-controller-select');
         if (!host) return;
         const options = pads.map((pad) =>
             `<option value="${pad.controllerKey}">${pad.id} · slot ${pad.index}</option>`
@@ -616,7 +616,7 @@
     }
 
     function _renderProfileOptions(profileNames, selectedName) {
-        const host = document.getElementById('feedback-contoller-input-profile-select');
+        const host = document.getElementById('feedback-controller-plugin-profile-select');
         if (!host) return;
         const names = Array.isArray(profileNames) && profileNames.length ? profileNames : ['default-standard-pad'];
         const optionsHtml = names.map((name) => `<option value="${name}">${name}</option>`).join('');
@@ -625,7 +625,7 @@
     }
 
     function _renderLiveInputs(summary) {
-        const host = document.getElementById('feedback-contoller-input-live-inputs');
+        const host = document.getElementById('feedback-controller-plugin-live-inputs');
         if (!host) return;
         host.innerHTML = ACTION_ORDER.map(([key, label]) => {
             const active = summary.buttons.includes(key) || summary.axes.includes(key);
@@ -637,7 +637,7 @@
     }
 
     function _renderMappingButtons(profile, summary) {
-        const host = document.getElementById('feedback-contoller-input-mapping-grid');
+        const host = document.getElementById('feedback-controller-plugin-mapping-grid');
         if (!host) return;
         host.innerHTML = ACTION_ORDER.map(([actionKey, label]) => {
             const armed = !!(state.capture && state.capture.actionKey === actionKey);
@@ -658,7 +658,7 @@
     }
 
     function _renderAxisCards(profile) {
-        const host = document.getElementById('feedback-contoller-input-axis-grid');
+        const host = document.getElementById('feedback-controller-plugin-axis-grid');
         if (!host) return;
         host.innerHTML = AXIS_META.map((axis) => {
             const config = profile.calibration.axes[axis.key] || { deadzone: 0, invert: false };
@@ -701,17 +701,17 @@
     }
 
     function _bindControls() {
-        const refreshBtn = document.getElementById('feedback-contoller-input-refresh');
-        const resetBtn = document.getElementById('feedback-contoller-input-save-default');
-        const clearBtn = document.getElementById('feedback-contoller-input-clear-profile');
-        const cancelBtn = document.getElementById('feedback-contoller-input-cancel-capture');
-        const controllerSelect = document.getElementById('feedback-contoller-input-controller-select');
-        const profileSelect = document.getElementById('feedback-contoller-input-profile-select');
-        const profileNameInput = document.getElementById('feedback-contoller-input-profile-name');
-        const renameBtn = document.getElementById('feedback-contoller-input-save-named');
-        const newBtn = document.getElementById('feedback-contoller-input-new-profile');
-        const duplicateBtn = document.getElementById('feedback-contoller-input-duplicate-profile');
-        const thresholdInput = document.getElementById('feedback-contoller-input-axis-threshold');
+        const refreshBtn = document.getElementById('feedback-controller-plugin-refresh');
+        const resetBtn = document.getElementById('feedback-controller-plugin-save-default');
+        const clearBtn = document.getElementById('feedback-controller-plugin-clear-profile');
+        const cancelBtn = document.getElementById('feedback-controller-plugin-cancel-capture');
+        const controllerSelect = document.getElementById('feedback-controller-plugin-controller-select');
+        const profileSelect = document.getElementById('feedback-controller-plugin-profile-select');
+        const profileNameInput = document.getElementById('feedback-controller-plugin-profile-name');
+        const renameBtn = document.getElementById('feedback-controller-plugin-save-named');
+        const newBtn = document.getElementById('feedback-controller-plugin-new-profile');
+        const duplicateBtn = document.getElementById('feedback-controller-plugin-duplicate-profile');
+        const thresholdInput = document.getElementById('feedback-controller-plugin-axis-threshold');
 
         if (refreshBtn && !refreshBtn.__fbciBound) {
             refreshBtn.__fbciBound = true;
@@ -772,22 +772,22 @@
         const profile = state.currentProfile = loadProfile(activeControllerKey);
         const profileNames = listProfiles(activeControllerKey);
 
-        _setText('feedback-contoller-input-status', _statusText(primary, pads));
-        _setText('feedback-contoller-input-primary', primary
+        _setText('feedback-controller-plugin-status', _statusText(primary, pads));
+        _setText('feedback-controller-plugin-primary', primary
             ? `${primary.id}\nSlot: ${primary.index}\nController key: ${primary.controllerKey}\nButtons pressed: ${getPressedButtons(primary).map((button) => button.key).join(', ') || 'none'}\nAxes active: ${getActiveAxes(primary).map((axis) => `${axis.key}=${axis.value}`).join(', ') || 'none'}`
             : 'Waiting for a standard browser gamepad…');
-        _setText('feedback-contoller-input-pads', JSON.stringify(pads, null, 2));
-        _setText('feedback-contoller-input-profile', JSON.stringify(profile, null, 2));
-        _setText('feedback-contoller-input-capture-status', state.capture
+        _setText('feedback-controller-plugin-pads', JSON.stringify(pads, null, 2));
+        _setText('feedback-controller-plugin-profile', JSON.stringify(profile, null, 2));
+        _setText('feedback-controller-plugin-capture-status', state.capture
             ? `Listening for input to map ${state.capture.actionName} on ${state.capture.profileName}.`
             : 'Pick a controller, choose a profile, then click a tile to remap it.');
 
         _renderControllerOptions(pads, activeControllerKey);
         _renderProfileOptions(profileNames, profile.profileName);
-        _setValue('feedback-contoller-input-profile-name', profile.profileName);
-        _setValue('feedback-contoller-input-axis-threshold', profile.calibration.axisThreshold);
+        _setValue('feedback-controller-plugin-profile-name', profile.profileName);
+        _setValue('feedback-controller-plugin-axis-threshold', profile.calibration.axisThreshold);
 
-        const cancelBtn = document.getElementById('feedback-contoller-input-cancel-capture');
+        const cancelBtn = document.getElementById('feedback-controller-plugin-cancel-capture');
         if (cancelBtn) cancelBtn.disabled = !state.capture;
 
         _renderLiveInputs(liveSummary);
